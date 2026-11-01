@@ -888,11 +888,12 @@
                     "type": "object"
                 },
                 "serviceDiscovery": {
-                    "description": "Service discovery mode, supports \"k8s\" or \"static\". Defaults to \"k8s\" if not set.",
+                    "description": "Service discovery mode, supports \"k8s\", \"static\" or \"external-only\" (no local engines; pass --external-providers-config through extraArgs). Defaults to \"k8s\" if not set.",
                     "type": "string",
                     "enum": [
                         "k8s",
-                        "static"
+                        "static",
+                        "external-only"
                     ]
                 },
                 "serviceMonitor": {
@@ -1593,14 +1594,14 @@
                                 "type": "object",
                                 "properties": {
                                     "convert": {
-                                        "description": "The conversion type for the model, can be \"token_embed\", \"embed\", \"token_classify\", \"classify\", or \"score\".",
+                                        "description": "The conversion type for the model: auto, none, embed or classify (vLLM --convert). reward is accepted by vLLM 0.13 and older.",
                                         "type": "string",
                                         "enum": [
-                                            "token_embed",
+                                            "auto",
+                                            "none",
                                             "embed",
-                                            "token_classify",
                                             "classify",
-                                            "score"
+                                            "reward"
                                         ]
                                     },
                                     "dtype": {
@@ -1643,11 +1644,13 @@
                                         "type": "integer"
                                     },
                                     "runner": {
-                                        "description": "The runner type for the model, can be auto or pooling",
+                                        "description": "The runner type for the model: auto, generate, pooling or draft (vLLM --runner)",
                                         "type": "string",
                                         "enum": [
                                             "auto",
-                                            "pooling"
+                                            "generate",
+                                            "pooling",
+                                            "draft"
                                         ]
                                     },
                                     "tensorParallelSize": {

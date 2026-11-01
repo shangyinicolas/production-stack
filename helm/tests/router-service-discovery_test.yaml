@@ -1,0 +1,33 @@
+suite: test router service discovery arguments
+templates:
+  - deployment-router.yaml
+tests:
+  - it: should pass external-only without k8s or static arguments
+    set:
+      routerSpec:
+        serviceDiscovery: "external-only"
+        extraArgs:
+          - "--external-providers-config"
+          - "/config/providers.yaml"
+    asserts:
+    - contains:
+        path: spec.template.spec.containers[0].args
+        content: "external-only"
+    - notContains:
+        path: spec.template.spec.containers[0].args
+        content: "--k8s-namespace"
+    - notContains:
+        path: spec.template.spec.containers[0].args
+        content: "--static-backends"
+    - contains:
+        path: spec.template.spec.containers[0].args
+        content: "--external-providers-config"
+
+  - it: should pass k8s discovery arguments by default
+    asserts:
+    - contains:
+        path: spec.template.spec.containers[0].args
+        content: "k8s"
+    - contains:
+        path: spec.template.spec.containers[0].args
+        content: "--k8s-namespace"
