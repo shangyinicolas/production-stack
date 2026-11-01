@@ -779,28 +779,7 @@
                 },
                 "resources": {
                     "description": "router resource requests and limits",
-                    "type": "object",
-                    "properties": {
-                        "limits": {
-                            "type": "object",
-                            "properties": {
-                                "memory": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "requests": {
-                            "type": "object",
-                            "properties": {
-                                "cpu": {
-                                    "type": "string"
-                                },
-                                "memory": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
+                    "type": "object"
                 },
                 "rootPath": {
                     "description": "FastAPI root path for hosting under a subpath (e.g. /vllm)",
@@ -890,6 +869,8 @@
                         "session",
                         "prefixaware",
                         "kvaware",
+                        "loadaware",
+                        "priority",
                         "disaggregated_prefill",
                         "disaggregated_prefill_orchestrated"
                     ]
@@ -1325,7 +1306,10 @@
                                     },
                                     "triggers": {
                                         "description": "List of KEDA trigger configurations",
-                                        "type": "object",
+                                        "type": [
+                                            "array",
+                                            "object"
+                                        ],
                                         "properties": {
                                             "metadata": {
                                                 "description": "Trigger metadata",
@@ -1371,15 +1355,24 @@
                             },
                             "limitGPUCores": {
                                 "description": "Requires HAMi. The limit of GPU cores. Each unit equals to 1% device cores. https://project-hami.io/docs/userguide/NVIDIA-device/specify-device-core-usage",
-                                "type": "string"
+                                "type": [
+                                    "integer",
+                                    "string"
+                                ]
                             },
                             "limitGPUMem": {
                                 "description": "Requires HAMi. The limit of GPU memory. Each unit equals to 1M. https://project-hami.io/docs/userguide/NVIDIA-device/specify-device-memory-usage",
-                                "type": "string"
+                                "type": [
+                                    "integer",
+                                    "string"
+                                ]
                             },
                             "limitGPUMemPercentage": {
                                 "description": "Requires HAMi. The limit of GPU memory of GPU",
-                                "type": "string"
+                                "type": [
+                                    "integer",
+                                    "string"
+                                ]
                             },
                             "limitMemory": {
                                 "description": "The memory limit for the model. If limitCPU and limitMemory are not specified, only GPU resources will have limits set equal to their requests.",
@@ -1469,7 +1462,10 @@
                             },
                             "raySpec": {
                                 "description": "RaySec configuration, to deploy the model as a rayCluster instead of a deployment",
-                                "type": "object",
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
                                 "properties": {
                                     "enabled": {
                                         "description": "Whether to deploy the model as a rayCluster",
@@ -1481,7 +1477,11 @@
                                         "properties": {
                                             "requestCPU": {
                                                 "description": "CPU request for the head node",
-                                                "type": "integer"
+                                                "type": [
+                                                    "integer",
+                                                    "number",
+                                                    "string"
+                                                ]
                                             },
                                             "requestGPU": {
                                                 "description": "GPU request for the head node",
@@ -1505,7 +1505,11 @@
                             },
                             "requestCPU": {
                                 "description": "The number of CPUs requested for the model",
-                                "type": "integer"
+                                "type": [
+                                    "integer",
+                                    "number",
+                                    "string"
+                                ]
                             },
                             "requestGPU": {
                                 "description": "The number of GPUs requested for the model",
@@ -1517,15 +1521,24 @@
                             },
                             "requestGPUCores": {
                                 "description": "Requires HAMi. The percentage of GPU cores requested, e.g., \"10\". Each unit equals to 1% device cores. https://project-hami.io/docs/userguide/NVIDIA-device/specify-device-core-usage",
-                                "type": "string"
+                                "type": [
+                                    "integer",
+                                    "string"
+                                ]
                             },
                             "requestGPUMem": {
                                 "description": "Requires HAMi. The amount of GPU memory requested. Each unit equals to 1M. https://project-hami.io/docs/userguide/NVIDIA-device/specify-device-memory-usage",
-                                "type": "string"
+                                "type": [
+                                    "integer",
+                                    "string"
+                                ]
                             },
                             "requestGPUMemPercentage": {
                                 "description": "Requires HAMi. The percentage of GPU memory requested, e.g., \"80\". It cannot be used together with requestGPUMem.",
-                                "type": "string"
+                                "type": [
+                                    "integer",
+                                    "string"
+                                ]
                             },
                             "requestGPUType": {
                                 "description": "The type of GPU requested. If not specified, defaults to \"nvidia.com/gpu\"",

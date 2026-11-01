@@ -1,0 +1,40 @@
+suite: test values schema validation
+templates:
+  - deployment-router.yaml
+tests:
+  - it: should reject an unknown routing logic
+    set:
+      routerSpec:
+        routingLogic: "bogus"
+    asserts:
+    - failedTemplate: {}
+
+  - it: should accept loadaware routing logic
+    set:
+      routerSpec:
+        routingLogic: "loadaware"
+    asserts:
+    - contains:
+        path: spec.template.spec.containers[0].args
+        content: "loadaware"
+
+  - it: should accept priority routing logic
+    set:
+      routerSpec:
+        routingLogic: "priority"
+    asserts:
+    - contains:
+        path: spec.template.spec.containers[0].args
+        content: "priority"
+
+  - it: should accept a numeric router cpu request
+    set:
+      routerSpec:
+        resources:
+          requests:
+            cpu: 1
+            memory: 1Gi
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].resources.requests.cpu
+        value: 1
