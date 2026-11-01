@@ -1,0 +1,70 @@
+suite: test router service configuration
+templates:
+  - service-router.yaml
+tests:
+  - it: should not render a service when the router is disabled
+    set:
+      routerSpec:
+        enableRouter: false
+    asserts:
+    - hasDocuments:
+        count: 0
+
+  - it: should render a ClusterIP service with default ports
+    release:
+      name: vllm
+    asserts:
+    - hasDocuments:
+        count: 1
+    - isKind:
+        of: Service
+    - equal:
+        path: metadata.name
+        value: vllm-router-service
+    - equal:
+        path: spec.type
+        value: ClusterIP
+    - equal:
+        path: spec.ports[0]
+        value:
+          name: router-sport
+          port: 80
+          targetPort: 8000
+          protocol: TCP
+    - equal:
+        path: spec.ports[1].name
+        value: lmcache-port
+    - notExists:
+        path: metadata.annotations
+
+  - it: should set the node port only for NodePort services
+    set:
+      routerSpec:
+        serviceType: NodePort
+        nodePort: 30080
+    asserts:
+    - equal:
+        path: spec.type
+        value: NodePort
+    - equal:
+        path: spec.ports[0].nodePort
+        value: 30080
+
+  - it: should ignore the node port for ClusterIP services
+    set:
+      routerSpec:
+        serviceType: ClusterIP
+        nodePort: 30080
+    asserts:
+    - notExists:
+        path: spec.ports[0].nodePort
+
+  - it: should add service annotations
+    set:
+      routerSpec:
+        serviceAnnotations:
+          service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    asserts:
+    - equal:
+        path: metadata.annotations["service.beta.kubernetes.io/azure-load-balancer-internal"]
+        value: "true"

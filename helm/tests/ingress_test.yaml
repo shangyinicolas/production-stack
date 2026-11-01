@@ -1,0 +1,95 @@
+suite: test router ingress configuration
+templates:
+  - ingress.yaml
+tests:
+  - it: should not render an ingress by default
+    asserts:
+    - hasDocuments:
+        count: 0
+
+  - it: should not render an ingress when the router is disabled
+    set:
+      routerSpec:
+        enableRouter: false
+        ingress:
+          enabled: true
+    asserts:
+    - hasDocuments:
+        count: 0
+
+  - it: should route every host and path to the router service
+    release:
+      name: vllm
+    set:
+      routerSpec:
+        servicePort: 8080
+        ingress:
+          enabled: true
+          hosts:
+          - host: "vllm.example.com"
+            paths:
+            - path: /
+              pathType: Prefix
+            - path: /v1
+              pathType: ImplementationSpecific
+    asserts:
+    - hasDocuments:
+        count: 1
+    - isKind:
+        of: Ingress
+    - equal:
+        path: metadata.name
+        value: vllm-ingress-router
+    - equal:
+        path: spec.rules[0].host
+        value: vllm.example.com
+    - lengthEqual:
+        path: spec.rules[0].http.paths
+        count: 2
+    - equal:
+        path: spec.rules[0].http.paths[1]
+        value:
+          path: /v1
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: vllm-router-service
+              port:
+                number: 8080
+    - notExists:
+        path: spec.ingressClassName
+    - notExists:
+        path: spec.tls
+    - notExists:
+        path: metadata.annotations
+
+  - it: should set class name, annotations and tls when given
+    set:
+      routerSpec:
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+          hosts:
+          - host: "vllm.example.com"
+            paths:
+            - path: /
+              pathType: Prefix
+          tls:
+          - secretName: vllm-tls
+            hosts:
+            - "vllm.example.com"
+    asserts:
+    - equal:
+        path: spec.ingressClassName
+        value: nginx
+    - equal:
+        path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-read-timeout"]
+        value: "600"
+    - equal:
+        path: spec.tls
+        value:
+        - hosts:
+          - vllm.example.com
+          secretName: vllm-tls

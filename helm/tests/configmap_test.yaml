@@ -1,0 +1,30 @@
+suite: test engine configs configmap
+templates:
+  - configmap.yaml
+tests:
+  - it: should not render a configmap by default
+    asserts:
+    - hasDocuments:
+        count: 0
+
+  - it: should render the given configs as configmap data
+    release:
+      name: vllm
+    set:
+      servingEngineSpec:
+        configs:
+          LOG_LEVEL: "debug"
+          chat_template.jinja: "{{ messages }}"
+    asserts:
+    - hasDocuments:
+        count: 1
+    - isKind:
+        of: ConfigMap
+    - equal:
+        path: metadata.name
+        value: vllm-configs
+    - equal:
+        path: data
+        value:
+          LOG_LEVEL: debug
+          chat_template.jinja: "{{ messages }}"
