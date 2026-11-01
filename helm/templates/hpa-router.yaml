@@ -1,4 +1,4 @@
-{{- if .Values.routerSpec.autoscaling.enabled -}}
+{{- if and .Values.routerSpec.enableRouter .Values.routerSpec.autoscaling.enabled -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

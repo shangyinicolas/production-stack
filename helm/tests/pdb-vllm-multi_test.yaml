@@ -190,3 +190,17 @@ tests:
           app.kubernetes.io/managed-by: helm
           environment: test
           release: test
+
+  - it: should not render a PDB for a disabled model
+    set:
+      servingEngineSpec:
+        enableEngine: true
+        modelSpec:
+        - name: "mistral"
+          enabled: false
+          pdb:
+            enabled: true
+            minAvailable: 1
+    asserts:
+    - hasDocuments:
+        count: 0

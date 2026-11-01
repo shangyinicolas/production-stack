@@ -1,5 +1,6 @@
 {{- if .Values.servingEngineSpec.enableEngine -}}
 {{- range $modelSpec := .Values.servingEngineSpec.modelSpec }}
+{{- if ne $modelSpec.enabled false }}
 ---
 apiVersion: v1
 kind: Service
@@ -37,5 +38,6 @@ spec:
     helm-release-name: "{{ $.Release.Name }}"
   {{- include "chart.engineStandardLabels" (dict "releaseName" $.Release.Name "modelName" $modelSpec.name "chartName" $.Chart.Name) | nindent 4 }}
   {{- include "chart.engineLabels" $ | nindent 4 }}
+{{- end }}
 {{- end }}
 {{- end}}

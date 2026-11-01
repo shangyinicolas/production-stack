@@ -79,3 +79,16 @@ tests:
       - template: pvc.yaml
         hasDocuments:
           count: 0
+
+  - it: should not render a PVC for a disabled model
+    set:
+      servingEngineSpec:
+        enableEngine: true
+        modelSpec:
+          - name: "test-model"
+            enabled: false
+            pvcStorage: "50Gi"
+    asserts:
+      - template: pvc.yaml
+        hasDocuments:
+          count: 0
