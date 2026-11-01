@@ -58,7 +58,7 @@ servingEngineSpec:
     # -- a resources block containing requests and limits. If specified, this takes priority over simplified resource fields
     resources: {}
     # -- The number of CPUs requested for the model
-    requestCPU: 6
+    requestCPU: 6 # @schema type:[integer, number, string]
     # -- The amount of memory requested for the model
     requestMemory: "16Gi"
     # -- The number of GPUs requested for the model
@@ -66,21 +66,21 @@ servingEngineSpec:
     # -- The type of GPU requested. If not specified, defaults to "nvidia.com/gpu"
     requestGPUType: "nvidia.com/mig-4g.71gb"
     # -- Requires HAMi. The amount of GPU memory requested. Each unit equals to 1M. https://project-hami.io/docs/userguide/NVIDIA-device/specify-device-memory-usage
-    requestGPUMem: "3000"
+    requestGPUMem: "3000" # @schema type:[integer, string]
     # -- Requires HAMi. The percentage of GPU memory requested, e.g., "80". It cannot be used together with requestGPUMem.
-    requestGPUMemPercentage: "80"
+    requestGPUMemPercentage: "80" # @schema type:[integer, string]
     # -- Requires HAMi. The percentage of GPU cores requested, e.g., "10". Each unit equals to 1% device cores. https://project-hami.io/docs/userguide/NVIDIA-device/specify-device-core-usage
-    requestGPUCores: "10"
+    requestGPUCores: "10" # @schema type:[integer, string]
     # -- The CPU limit for the model. If limitCPU and limitMemory are not specified, only GPU resources will have limits set equal to their requests.
     limitCPU: 8 # @schema type:[integer, number, string]
     # -- The memory limit for the model. If limitCPU and limitMemory are not specified, only GPU resources will have limits set equal to their requests.
     limitMemory: "32Gi"
     # -- Requires HAMi. The limit of GPU memory. Each unit equals to 1M. https://project-hami.io/docs/userguide/NVIDIA-device/specify-device-memory-usage
-    limitGPUMem: "3000"
+    limitGPUMem: "3000" # @schema type:[integer, string]
     # -- Requires HAMi. The limit of GPU memory of GPU
-    limitGPUMemPercentage: "80"
+    limitGPUMemPercentage: "80" # @schema type:[integer, string]
     # -- Requires HAMi. The limit of GPU cores. Each unit equals to 1% device cores. https://project-hami.io/docs/userguide/NVIDIA-device/specify-device-core-usage
-    limitGPUCores: "10"
+    limitGPUCores: "10" # @schema type:[integer, string]
     # -- The amount of storage requested for the model
     pvcStorage: "50Gi"
     # -- The access mode policy for the mounted volume.
@@ -261,7 +261,7 @@ servingEngineSpec:
         # -- Number of replicas to scale to in fallback
         replicas: 2
       # -- List of KEDA trigger configurations
-      triggers:
+      triggers: # @schema type:[array, object]
         # -- Trigger type
         type: "prometheus"
         # -- Trigger metadata
@@ -296,13 +296,13 @@ servingEngineSpec:
           formula: ""
 
     # -- RaySec configuration, to deploy the model as a rayCluster instead of a deployment
-    raySpec:
+    raySpec: # @schema type:[object, null]
       # -- Whether to deploy the model as a rayCluster
       enabled: false
       # -- Head node configuration
       headNode:
         # -- CPU request for the head node
-        requestCPU: 1
+        requestCPU: 1 # @schema type:[integer, number, string]
         # -- Memory request for the head node
         requestMemory: "1Gi"
         # -- GPU request for the head node
@@ -574,7 +574,7 @@ routerSpec:
   staticModels: ""
 
   # -- routing logic, supports "roundrobin", "session", "prefixaware", "kvaware", "disaggregated_prefill" or "disaggregated_prefill_orchestrated"
-  routingLogic: "roundrobin" # @schema enum:[roundrobin,session,prefixaware,kvaware,disaggregated_prefill,disaggregated_prefill_orchestrated]
+  routingLogic: "roundrobin" # @schema enum:[roundrobin,session,prefixaware,kvaware,loadaware,priority,disaggregated_prefill,disaggregated_prefill_orchestrated]
 
   # -- Minimum prefix match length required for prefixaware routing to reuse a
   # matched endpoint. If the longest prefix match is shorter than this value,
@@ -629,6 +629,7 @@ routerSpec:
   # -- lmcache controller port, used when routingLogic is "kvaware"
   lmcacheControllerPort: "" # @schema type:[integer, string]
 
+  # @schema skipProperties:true
   # -- router resource requests and limits
   resources:
     requests:
