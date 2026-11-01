@@ -175,10 +175,10 @@ servingEngineSpec:
       maxLoras: 4
       # -- The fraction of GPU memory to be used for the model executor, which can range from 0 to 1
       gpuMemoryUtilization: 0.95 # @schema type:[integer, number, string]
-      # -- The runner type for the model, can be auto or pooling
-      runner: "pooling" # @schema enum:[auto,pooling]
-      # -- The conversion type for the model, can be "token_embed", "embed", "token_classify", "classify", or "score".
-      convert: "embed" # @schema enum:[token_embed,embed,token_classify,classify,score]
+      # -- The runner type for the model: auto, generate, pooling or draft (vLLM --runner)
+      runner: "pooling" # @schema enum:[auto,generate,pooling,draft]
+      # -- The conversion type for the model: auto, none, embed or classify (vLLM --convert). reward is accepted by vLLM 0.13 and older.
+      convert: "embed" # @schema enum:[auto,none,embed,classify,reward]
       # --  Extra command line arguments to pass to vLLM
       extraArgs:
         - "--gpu-memory-utilization"
@@ -565,8 +565,8 @@ routerSpec:
   # -- Service port
   servicePort: 80
 
-  # -- Service discovery mode, supports "k8s" or "static". Defaults to "k8s" if not set.
-  serviceDiscovery: "k8s" # @schema enum:[k8s,static]
+  # -- Service discovery mode, supports "k8s", "static" or "external-only" (no local engines; pass --external-providers-config through extraArgs). Defaults to "k8s" if not set.
+  serviceDiscovery: "k8s" # @schema enum:[k8s,static,external-only]
   # -- Service discovery mode type, supports "pod-ip" or "service-name". Defaults to "pod-ip" if not set.
   k8sServiceDiscoveryType: "pod-ip" # @schema enum:[pod-ip,service-name]
   # -- If serviceDiscovery is set to "static", the comma-separated values below are required. There needs to be the same number of backends and models

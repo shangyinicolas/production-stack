@@ -1,0 +1,55 @@
+suite: test vLLM runner and convert arguments
+templates:
+  - deployment-vllm-multi.yaml
+tests:
+  - it: should pass runner generate and convert none to vLLM
+    set:
+      servingEngineSpec:
+        enableEngine: true
+        modelSpec:
+        - name: "opt125m"
+          repository: "vllm/vllm-openai"
+          tag: "latest"
+          modelURL: "facebook/opt-125m"
+          replicaCount: 1
+          requestCPU: 1
+          requestMemory: "4Gi"
+          requestGPU: 1
+          vllmConfig:
+            runner: "generate"
+            convert: "none"
+    asserts:
+    - contains:
+        path: spec.template.spec.containers[0].command
+        content: "--runner"
+    - contains:
+        path: spec.template.spec.containers[0].command
+        content: "generate"
+    - contains:
+        path: spec.template.spec.containers[0].command
+        content: "--convert"
+    - contains:
+        path: spec.template.spec.containers[0].command
+        content: "none"
+
+  - it: should not pass runner or convert when they are not set
+    set:
+      servingEngineSpec:
+        enableEngine: true
+        modelSpec:
+        - name: "opt125m"
+          repository: "vllm/vllm-openai"
+          tag: "latest"
+          modelURL: "facebook/opt-125m"
+          replicaCount: 1
+          requestCPU: 1
+          requestMemory: "4Gi"
+          requestGPU: 1
+          vllmConfig: {}
+    asserts:
+    - notContains:
+        path: spec.template.spec.containers[0].command
+        content: "--runner"
+    - notContains:
+        path: spec.template.spec.containers[0].command
+        content: "--convert"

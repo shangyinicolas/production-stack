@@ -150,8 +150,8 @@ This table documents all available configuration values for the Production Stack
 | `servingEngineSpec.modelSpec[].vllmConfig.maxNumSeqs` | integer | `256` | Maximum number of sequences to be processed in a single iteration |
 | `servingEngineSpec.modelSpec[].vllmConfig.maxLoras` | integer | `0` | The maximum number of LoRA models to be loaded in a single batch |
 | `servingEngineSpec.modelSpec[].vllmConfig.gpuMemoryUtilization` | number | `0.9` | The fraction of GPU memory to be used for the model executor (0-1) |
-| `servingEngineSpec.modelSpec[].vllmConfig.runner` | string | `""` | The runner type for the model, can be "auto" or "pooling" |
-| `servingEngineSpec.modelSpec[].vllmConfig.convert` | string | `""` | The conversion type for the model, can be "token_embed", "embed", "token_classify", "classify", or "score" |
+| `servingEngineSpec.modelSpec[].vllmConfig.runner` | string | `""` | The runner type for the model (vLLM `--runner`): "auto", "generate", "pooling" or "draft" |
+| `servingEngineSpec.modelSpec[].vllmConfig.convert` | string | `""` | The conversion type for the model (vLLM `--convert`): "auto", "none", "embed" or "classify"; "reward" is accepted by vLLM 0.13 and older |
 | `servingEngineSpec.modelSpec[].vllmConfig.extraArgs` | list | `["--trust-remote-code"]` | Extra command line arguments to pass to vLLM |
 
 #### LMCache Configuration
@@ -260,7 +260,7 @@ Set `servingEngineSpec.modelSpec[].raySpec.enabled: true` to deploy the model as
 | `routerSpec.serviceType` | string | `"ClusterIP"` | Kubernetes service type for the router |
 | `routerSpec.serviceAnnotations` | map | `{}` | Service annotations for LoadBalancer/NodePort |
 | `routerSpec.servicePort` | integer | `80` | Port the router service will listen on |
-| `routerSpec.serviceDiscovery` | string | `"k8s"` | Service discovery mode ("k8s" or "static") |
+| `routerSpec.serviceDiscovery` | string | `"k8s"` | Service discovery mode ("k8s", "static" or "external-only") |
 | `routerSpec.k8sServiceDiscoveryType` | string | `"pod-ip"` | Service discovery Type ("pod-ip" or "service-name") if serviceDiscovery is "k8s" |
 | `routerSpec.staticBackends` | string | `""` | Comma-separated list of backend addresses if serviceDiscovery is "static" |
 | `routerSpec.staticModels` | string | `""` | Comma-separated list of model names if serviceDiscovery is "static" |
