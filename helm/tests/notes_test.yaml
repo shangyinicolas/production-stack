@@ -1,0 +1,123 @@
+suite: test post-install notes
+templates:
+  - NOTES.txt
+release:
+  name: vllm
+  namespace: demo
+tests:
+  - it: should list enabled models and skip disabled ones
+    set:
+      servingEngineSpec:
+        enableEngine: true
+        modelSpec:
+        - name: "opt125m"
+          modelURL: "facebook/opt-125m"
+          replicaCount: 2
+        - name: "off"
+          modelURL: "example/off"
+          enabled: false
+    asserts:
+    - matchRegexRaw:
+        pattern: "- opt125m \\(facebook/opt-125m\\), 2 replica\\(s\\)"
+    - notMatchRegexRaw:
+        pattern: "example/off"
+    - matchRegexRaw:
+        pattern: "\"model\": \"facebook/opt-125m\""
+
+  - it: should say when no model is enabled
+    asserts:
+    - matchRegexRaw:
+        pattern: "No serving engines are enabled"
+    - notMatchRegexRaw:
+        pattern: "Engine pods can take"
+
+  - it: should port-forward the router service for ClusterIP
+    asserts:
+    - matchRegexRaw:
+        pattern: "kubectl port-forward svc/vllm-router-service -n demo 30080:80"
+    - matchRegexRaw:
+        pattern: "export ROUTER_URL=http://localhost:30080"
+
+  - it: should read the node port for NodePort
+    set:
+      routerSpec:
+        serviceType: NodePort
+    asserts:
+    - matchRegexRaw:
+        pattern: "kubectl get svc vllm-router-service -n demo -o jsonpath='\\{.spec.ports\\[0\\].nodePort\\}'"
+    - notMatchRegexRaw:
+        pattern: "port-forward"
+
+  - it: should read the external IP for LoadBalancer
+    set:
+      routerSpec:
+        serviceType: LoadBalancer
+    asserts:
+    - matchRegexRaw:
+        pattern: "loadBalancer.ingress\\[0\\].ip"
+    - matchRegexRaw:
+        pattern: "export ROUTER_URL=http://\\$ROUTER_IP:80"
+
+  - it: should use the ingress host with https when tls is set
+    set:
+      routerSpec:
+        ingress:
+          enabled: true
+          hosts:
+          - host: llm.example.com
+            paths:
+            - path: /
+              pathType: Prefix
+          tls:
+          - secretName: llm-tls
+            hosts:
+            - llm.example.com
+    asserts:
+    - matchRegexRaw:
+        pattern: "export ROUTER_URL=https://llm.example.com"
+    - notMatchRegexRaw:
+        pattern: "port-forward"
+
+  - it: should warn about client auth without printing a plain API key
+    set:
+      servingEngineSpec:
+        vllmApiKey: "sk-super-secret"
+    asserts:
+    - matchRegexRaw:
+        pattern: "The router itself does not authenticate clients"
+    - notMatchRegexRaw:
+        pattern: "sk-super-secret"
+
+  - it: should warn about client auth when the API key comes from a secret
+    set:
+      servingEngineSpec:
+        vllmApiKey:
+          secretName: my-key
+          secretKey: key
+    asserts:
+    - matchRegexRaw:
+        pattern: "The router itself does not authenticate clients"
+
+  - it: should not warn about client auth without an API key
+    asserts:
+    - notMatchRegexRaw:
+        pattern: "does not authenticate clients"
+
+  - it: should port-forward each engine on its own local port when the router is disabled
+    set:
+      routerSpec:
+        enableRouter: false
+      servingEngineSpec:
+        enableEngine: true
+        modelSpec:
+        - name: "llama3"
+          modelURL: "meta-llama/Llama-3.1-8B-Instruct"
+        - name: "mistral"
+          modelURL: "mistralai/Mistral-7B-Instruct-v0.2"
+    asserts:
+    - matchRegexRaw:
+        pattern: "svc/vllm-llama3-engine-service -n demo 30080:80"
+    - matchRegexRaw:
+        pattern: "svc/vllm-mistral-engine-service -n demo 30081:80"
+    - notMatchRegexRaw:
+        pattern: "vllm-router-service"

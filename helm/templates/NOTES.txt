@@ -1,0 +1,70 @@
+vLLM Production Stack "{{ .Release.Name }}" is installed in namespace "{{ .Release.Namespace }}".
+{{- $models := list }}
+{{- if .Values.servingEngineSpec.enableEngine }}
+{{- range .Values.servingEngineSpec.modelSpec }}
+{{- if ne .enabled false }}
+{{- $models = append $models . }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+Models:
+{{- if $models }}
+{{- range $models }}
+  - {{ .name }} ({{ .modelURL }}), {{ .replicaCount | default 1 }} replica(s)
+{{- end }}
+{{- else }}
+  No serving engines are enabled. Set servingEngineSpec.enableEngine and add a
+  modelSpec entry without enabled: false to deploy a model.
+{{- end }}
+{{- if $models }}
+
+Engine pods can take several minutes to download the model and become ready:
+  kubectl get pods -n {{ .Release.Namespace }} -w
+{{- end }}
+
+{{- if .Values.routerSpec.enableRouter }}
+{{- $svc := printf "%s-router-service" .Release.Name }}
+{{- $port := .Values.routerSpec.servicePort }}
+
+Send requests to the router:
+{{- if and .Values.routerSpec.ingress.enabled .Values.routerSpec.ingress.hosts }}
+{{- $scheme := ternary "https" "http" (not (empty .Values.routerSpec.ingress.tls)) }}
+  export ROUTER_URL={{ $scheme }}://{{ (first .Values.routerSpec.ingress.hosts).host }}
+{{- else if eq .Values.routerSpec.serviceType "NodePort" }}
+  export NODE_PORT=$(kubectl get svc {{ $svc }} -n {{ .Release.Namespace }} -o jsonpath='{.spec.ports[0].nodePort}')
+  export NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
+  export ROUTER_URL=http://$NODE_IP:$NODE_PORT
+{{- else if eq .Values.routerSpec.serviceType "LoadBalancer" }}
+  The external IP can take a minute to be assigned:
+  export ROUTER_IP=$(kubectl get svc {{ $svc }} -n {{ .Release.Namespace }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  export ROUTER_URL=http://$ROUTER_IP:{{ $port }}
+{{- else }}
+  kubectl port-forward svc/{{ $svc }} -n {{ .Release.Namespace }} 30080:{{ $port }}
+  export ROUTER_URL=http://localhost:30080
+{{- end }}
+
+List the served models:
+  curl $ROUTER_URL/v1/models
+{{- with (first $models) }}
+
+Try a completion:
+  curl $ROUTER_URL/v1/completions -H "Content-Type: application/json" \
+    -d '{"model": "{{ .modelURL }}", "prompt": "Hello, my name is", "max_tokens": 16}'
+{{- end }}
+{{- $key := .Values.servingEngineSpec.vllmApiKey }}
+{{- if or (and $key (kindIs "string" $key)) (and (kindIs "map" $key) $key.secretName) }}
+
+The engines require the vLLM API key and the router adds it when it forwards
+requests. The router itself does not authenticate clients, so limit who can
+reach it (for example with a NetworkPolicy or ingress authentication).
+{{- end }}
+{{- else }}
+
+The router is disabled. Reach an engine directly, for example:
+{{- range $i, $m := $models }}
+  kubectl port-forward svc/{{ $.Release.Name }}-{{ $m.name }}-engine-service -n {{ $.Release.Namespace }} {{ add 30080 $i }}:{{ include "chart.service-port" $ }}
+{{- end }}
+{{- end }}
+
+Docs and tutorials: https://github.com/vllm-project/production-stack/tree/main/tutorials
