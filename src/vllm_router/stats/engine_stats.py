@@ -51,7 +51,10 @@ class EngineStats:
             EngineStats: The EngineStats object
 
         Note:
-            Assume vllm only runs a single model
+            Assume vllm only runs a single model. With data parallelism,
+            vllm exports one sample per engine (the "engine" label), so
+            request and prefix cache counts are summed across engines and
+            KV cache usage takes the most loaded engine.
         """
         num_running_reqs = 0
         num_queuing_reqs = 0
@@ -63,22 +66,24 @@ class EngineStats:
         for family in text_string_to_metric_families(vllm_scrape):
             for sample in family.samples:
                 if sample.name == "vllm:num_requests_running":
-                    num_running_reqs = sample.value
+                    num_running_reqs += sample.value
                 elif sample.name == "vllm:num_requests_waiting":
-                    num_queuing_reqs = sample.value
+                    num_queuing_reqs += sample.value
                 elif sample.name == "vllm:gpu_prefix_cache_hit_rate":
-                    gpu_prefix_cache_hit_rate = sample.value
+                    gpu_prefix_cache_hit_rate = max(
+                        gpu_prefix_cache_hit_rate, sample.value
+                    )
                 elif sample.name == "vllm:gpu_prefix_cache_hits_total":
-                    gpu_prefix_cache_hits_total = sample.value
+                    gpu_prefix_cache_hits_total += sample.value
                 elif sample.name == "vllm:gpu_prefix_cache_queries_total":
-                    gpu_prefix_cache_queries_total = sample.value
+                    gpu_prefix_cache_queries_total += sample.value
                 elif sample.name in (
                     "vllm:gpu_cache_usage_perc",
                     "vllm:kv_cache_usage_perc",
                 ):
                     # vLLM renamed gpu_cache_usage_perc to kv_cache_usage_perc;
                     # newer releases only export the new name.
-                    gpu_cache_usage_perc = sample.value
+                    gpu_cache_usage_perc = max(gpu_cache_usage_perc, sample.value)
 
         return EngineStats(
             num_running_requests=num_running_reqs,
